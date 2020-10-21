@@ -13,9 +13,9 @@ node('frontservices-builder') {
                   sh 'gcloud auth activate-service-account --key-file gcloud-svc-acct.json'
                   sh 'gcloud config set project newswhip-224410'
                   sh 'gcloud auth configure-docker -q'
-                  sh "docker build --build-arg JMETER_VERSION=5.3 -t dis-jmeter:5.3 ."
-                  sh "docker tag dis-jmeter gcr.io/newswhip-224410/dis-jmeter:5.3"
-                  sh "docker push gcr.io/newswhip-224410/dis-jmeter:5.3"
+                  sh "docker build --build-arg JMETER_VERSION=5.3 -t dis-jmeter:latest ."
+                  sh "docker tag dis-jmeter gcr.io/newswhip-224410/dis-jmeter:latest"
+                  sh "docker push gcr.io/newswhip-224410/dis-jmeter:latest"
               }
             }
           }
