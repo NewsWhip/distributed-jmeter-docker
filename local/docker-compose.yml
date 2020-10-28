@@ -3,6 +3,7 @@ version: '3'
 services:
   master:
     build: ..
+    image: dis-jmeter:latest
     command: master
     tty: true
     ports:
@@ -11,8 +12,8 @@ services:
       - "./test/:/jmeter/sample/"
     networks:
       - jmeter-network
-  server:
-    image: jmeter:5.0
+  server-1:
+    image: dis-jmeter:latest
     command: server
     tty: true
     ports:
@@ -22,6 +23,27 @@ services:
       - jmeter-network
     depends_on:
       - master
-
+  server-2:
+    image: dis-jmeter:latest
+    command: server
+    tty: true
+    ports:
+      - "50000"
+      - "1099"
+    networks:
+      - jmeter-network
+    depends_on:
+      - master
+  server-3:
+    image: dis-jmeter:latest
+    command: server
+    tty: true
+    ports:
+      - "50000"
+      - "1099"
+    networks:
+      - jmeter-network
+    depends_on:
+      - master
 networks:
   jmeter-network:
