@@ -13,16 +13,17 @@ node('helm2') {
                   sh 'gcloud auth activate-service-account --key-file gcloud-svc-acct.json'
                   sh 'gcloud config set project newswhip-224410'
                   sh 'gcloud auth configure-docker -q'
-                  sh 'gcloud container clusters get-credentials gke-prod --zone=us-east4'
                   sh "docker pull gcr.io/newswhip-224410/dis-jmeter:latest"
-                  sh "docker run dis-jmeter:latest"
+                  sh "docker images"
+                  sh "sleep 10s"
+                  sh "docker run gcr.io/newswhip-224410/dis-jmeter:latest"
               }
             }
             
             stage("Docker pull image and build distributed-jmeter") {
               container("helm2") {
                 dir("local"){
-                  sh "docker-compose up -d"
+                  sh "/usr/local/bin/docker-compose up -d"
                 }
               }
             }
