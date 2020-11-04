@@ -14,15 +14,14 @@ node('helm2') {
                   sh 'gcloud config set project newswhip-224410'
                   sh 'gcloud auth configure-docker -q'
                   sh 'gcloud container clusters get-credentials gke-prod --zone=us-east4'
-                  sh 'gcloud auth configure-docker -q'
+                  sh "docker pull gcr.io/newswhip-224410/dis-jmeter:latest"
+                  sh "docker run dis-jmeter:latest"
               }
             }
             
             stage("Docker pull image and build distributed-jmeter") {
               container("helm2") {
                 dir("local"){
-                  sh "docker pull gcr.io/newswhip-224410/dis-jmeter:latest"
-                  sh "docker run dis-jmeter:latest"
                   sh "docker-compose up -d"
                 }
               }
