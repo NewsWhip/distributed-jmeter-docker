@@ -14,6 +14,7 @@ node('helm2') {
                   sh 'gcloud config set project newswhip-224410'
                   sh 'gcloud auth configure-docker -q'
                   sh 'gcloud container clusters get-credentials gke-prod --zone=us-east4'
+                  sh 'gcloud auth configure-docker -q'
               }
             }
             
