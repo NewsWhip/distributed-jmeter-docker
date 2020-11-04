@@ -29,43 +29,47 @@ node('helm2') {
             
             stage("Retrieve tests from cloud") {
               container("helm2") {
-                dir("k8s")
-                {
-                  sh "gsutil cp ${StorageLocation}/${Test} ."
-                  if (CSV != '') {
-                    sh "gsutil cp ${StorageLocation}/${CSV} ."
-                    echo "CSV provided found"
-                  }
+                sh "gsutil cp ${StorageLocation}/${Test} ."
+                if (CSV != '') {
+                  sh "gsutil cp ${StorageLocation}/${CSV} ."
+                  echo "CSV provided found"
                 }
               }
             }
             
             stage("Copy tests to jmeter and run tests") {
               container("helm2") {
-                env.MASTER_NAME = sh(returnStdout: true, script: "kubectl get pods -l app.kubernetes.io/component=master -o jsonpath='{.items[*].metadata.name}'").trim()
+                env.MASTER_NAME = sh(returnStdout: true, script: "docker ps -aqf 'name=local_master'").trim()
                 println "Master is ${env.MASTER_NAME}"
                 sh "docker cp ${Test} ${env.MASTER_NAME}:/jmeter/apache-jmeter-5.3/bin"
                 if (CSV != '') {
                   sh "docker cp ${CSV} ${env.MASTER_NAME}:/jmeter/apache-jmeter-5.3/bin"
-                  env.SERVER_NAMES = sh(returnStdout: true, script: "kubectl get pods -l app.kubernetes.io/component=server -o jsonpath='{.items[*].metadata.name}'").trim().replace(" ", ",")
+                  env.SERVER_NAMES = sh(returnStdout: true, script: "docker ps -aqf 'name=local_server'").trim().replace(" ", ",")
                   println "Servers are ${env.SERVER_NAMES}"
                   def servers = env.SERVER_NAMES.split(",")
                   println "Servers put into array"
                   copyeach(servers, CSV)
                 }
-                env.SERVER_IPS = sh(returnStdout: true, script: "kubectl get pods -l app.kubernetes.io/component=server -o jsonpath='{.items[*].status.podIP}'").trim().replace(" ", ",")
+                sh "docker network inspect jmeter-network"
+                env.SERVER_IPS = sh(returnStdout: true, script: "docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local_server-1_1 local_server-2_1 local_server-3_1").trim().replace(" ", ",")
                 println "Servers are ${env.SERVER_IPS}"
-                sh "kubectl exec -it ${env.MASTER_NAME} -- jmeter -n -t /jmeter/apache-jmeter-5.3/bin/${Test} -Guser_threads=${UserNum} -Gramp_up=${RampUp} -Giterations=${Iterations} -R ${env.SERVER_IPS} -l /jmeter/jtl/ -e -o /jmeter/html/"
+                sh "docker exec -it ${env.MASTER_NAME} /bin/bash -- jmeter -n -t /jmeter/apache-jmeter-5.3/bin/${Test} -R ${env.SERVER_IPS} -l /jmeter/apache-jmeter-5.3/bin/jtl/ -e -o /jmeter/apache-jmeter-5.3/bin/html/"
+                //sh "kubectl exec -it ${env.MASTER_NAME} -- jmeter -n -t /jmeter/apache-jmeter-5.3/bin/${Test} -Guser_threads=${UserNum} -Gramp_up=${RampUp} -Giterations=${Iterations} -R ${env.SERVER_IPS} -l /jmeter/jtl/ -e -o /jmeter/html/"
               }
             }
             
-            stage("Save Results and Delete the deployment") {
+            stage("Save Results") {
               container("helm2") {
-                dir("k8s/helm/ci/dis-jmeter")
-                {
-                  sh "docker cp ${env.MASTER_NAME}:/jmeter/html/ temp_tests"
-                  sh 'zip -r temp_tests.zip temp_tests'
-                  sh "gsutil cp -r temp_tests.zip ${StorageLocation}/"
+                sh "docker cp ${env.MASTER_NAME}:/jmeter/html/ temp_tests"
+                sh 'zip -r temp_tests.zip temp_tests'
+                sh "gsutil cp -r temp_tests.zip ${StorageLocation}/"
+              }
+            }
+
+            stage("Bring down the compose file removing the containers") {
+              container("helm2") {
+                dir("local"){
+                  sh "docker-compose down"
                 }
               }
             }
