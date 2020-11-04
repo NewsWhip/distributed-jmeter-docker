@@ -70,7 +70,7 @@ node('helm2') {
             stage("Bring down the compose file removing the containers") {
               container("helm2") {
                 dir("local"){
-                  sh "docker-compose down"
+                  sh "/usr/local/bin/docker-compose down"
                 }
               }
             }
