@@ -4,7 +4,7 @@ node('helm2') {
     stage("checkout"){
       checkout scm
     }
-    withCredentials([string(credentialsId: 'kubectl', variable: 'SVC_ACCOUNT_KEY')]) {
+    withCredentials([string(credentialsId: 'cloud-storage-admin', variable: 'SVC_ACCOUNT_KEY')]) {
           withEnv(['PATH+GCLOUDPATH=/root/google-cloud-sdk/bin','PRODUCT=spike','PROD_VERSION=latest']) {
             
             stage("Authenticate") {
